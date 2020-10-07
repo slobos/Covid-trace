@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('America/Argentina/Cordoba');
+
 function getConnection() {
     $dbh = new PDO("mysql:host=".DBHOST.";dbname=".DBNAME.";charset=utf8", DBUSER, DBPASS);
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -151,13 +153,12 @@ function getRegistros(){
 
     $db = getConnection();
 
-    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon
+    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion
 FROM
   pacientes as p,
   seguimientos AS s,
   (SELECT id, paciente, max(fecha) AS fecha FROM seguimientos GROUP BY paciente) as seg
 WHERE
-  DATEDIFF( CURDATE(), p.fecha ) < 15 AND
   s.paciente=p.transactionid AND
   seg.paciente=s.paciente AND
   seg.fecha=s.fecha";
@@ -180,13 +181,12 @@ function getMarkers(){
 
     $db = getConnection();
 
-    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon
+    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion
 FROM
   pacientes as p,
   seguimientos AS s,
   (SELECT id, paciente, max(fecha) AS fecha FROM seguimientos GROUP BY paciente) as seg
 WHERE
-  DATEDIFF( CURDATE(), p.fecha ) < 15 AND
   s.paciente=p.transactionid AND
   seg.paciente=s.paciente AND
   seg.fecha=s.fecha";
@@ -228,133 +228,6 @@ function getDetalles($id){
 
 
 
-function grantHanddler($action,$grantcode,$client=''){
-
-  if($action == "query" and $client == ""){
-
-    try {
-
-      $db = getConnection();
-
-      $sql = "SELECT * FROM grants WHERE code = :grantcode";
-      $stmt = $db->prepare($sql); 
-      $stmt->bindParam("grantcode",$grantcode);
-      $stmt->execute();
-      $results = $stmt->fetchAll();
-      $tResult = $stmt->rowCount();
-
-        if($tResult == 0){
-          $result = 98;
-        } elseif ($results[0]['client'] != "" and $results[0]['date'] != ""){
-          $result = 99;
-        } else {
-          $result = $tResult;
-        }
-
-    } catch(PDOException $e) {
-
-      echo '{"error":{"text":'. $e->getMessage() .'}}';
-
-    }
-
-  } elseif($action == "burn" and $client != ""){
-
-    try {
-
-      $db = getConnection();
-
-      $sql = "UPDATE grants SET date = now(), client = :client WHERE code = :code";
-
-      $stmt = $db->prepare($sql); 
-
-      $stmt->bindParam("client",$client);
-      $stmt->bindParam("code",$grantcode);
-      $stmt->execute();
-      $result = $stmt->rowCount();
-
-    } catch(PDOException $e) {
-
-      echo '{"error":{"text":'. $e->getMessage() .'}}';
-
-    }
-
-  }
-
-  $db = null;
-  $stmt = null;
-  $sql = null;
-
-  return $result;
-}
-
-
-
-function getClientData($transactionid){
-
-
-    try {
-
-      $db = getConnection();
-      $sql = "select c.name, c.lastname, c.email, c.phone, c.city, c.zipcode, c.state, c.country, c.profession, c.professionalid, c.speciality, c.workplace, t.value, g.code, g.laboratory FROM tickettypes as t, clients as c LEFT JOIN grants as g ON c.transactionid = g.client where c.transactionid = :transactionid and t.lang = 'es' and t.key = c.tickettype  order by c.id asc";
-      $stmt = $db->prepare($sql); 
-
-      $stmt->bindParam("transactionid",$transactionid);
-
-      $stmt->execute();
-      $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    } catch(PDOException $e) {
-
-      echo '{"error":{"text":'. $e->getMessage() .'}}';
-
-    }
-
-
-
-  $db = null;
-  $stmt = null;
-  $sql = null;
-
-  return $results;
-}
-
-
-function getClients(){
-
-
-    try {
-
-      $db = getConnection();
-      //$sql = "select c.id, c.name, c.lastname, c.email, c.phone, c.city, c.zipcode, c.state, c.country, c.profession, c.professionalid, c.speciality, c.workplace, t.value, g.code, g.laboratory FROM tickettypes as t, clients as c LEFT JOIN grants as g ON c.transactionid = g.client where t.lang = 'es' and t.key = c.tickettype";
-      $sql = "select c.name, c.lastname, c.email, c.phone, c.city, c.zipcode, c.state, c.country, c.profession, c.professionalid, c.speciality, c.workplace, t.value, g.code, g.laboratory FROM tickettypes as t, clients as c LEFT JOIN grants as g ON c.transactionid = g.client where t.lang = 'es' and t.key = c.tickettype  order by c.id asc";
-      $stmt = $db->prepare($sql); 
-      $stmt->execute();
-      $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    } catch(PDOException $e) {
-
-      echo '{"error":{"text":'. $e->getMessage() .'}}';
-
-    }
-
-
-
-  $db = null;
-  $stmt = null;
-  $sql = null;
-
-  return $results;
-}
-
-function cleanData(&$str){
-  $str = preg_replace("/\t/", "\\t", $str);
-  $str = preg_replace("/\r?\n/", "\\n", utf8_decode($str));
-  if(strstr($str, '"')) $str = '"' . str_replace('"', '""', $str) . '"';
-}
-
-
-
-
 function registerLogin($client,$clientIP){
 
   $regTransactionid = generateRandomString();
@@ -386,9 +259,9 @@ function registerLogin($client,$clientIP){
 }
 
 
-function registraLogin($usuario){
+function registraLogin($usuario,$ip){
 
-  $ipcliente = IP;
+  $ipcliente = $ip;
 
   try {
 

@@ -191,6 +191,9 @@ input:checked + .slider:before {
       </li>
     </ul>
     <ul class="navbar-nav ml-auto mt-0 mt-lg-0">
+      <li class="nav-item mt-2 mr-2">
+        Bienvenid@ <?php echo $_SESSION['nombre']." ".$_SESSION['apellido'];?>
+      </li>
       <li class="nav-item">
         <a class="nav-link" href="/logout.php"><i class="fas fa-sign-out-alt"></i>
         </a>
@@ -346,10 +349,10 @@ input:checked + .slider:before {
                       <option value=""></option>
                       <option>Hospitalizado</option>
                       <option>Domicilio</option>
-                      <option>Alta</option>
-                      <option>Fallecido</option>
+                      <!-- <option>Alta</option>
+                      <option>Fallecido</option> -->
                   </select> 
-                <label for="id_input_situacion" class="text-muted"><span>Sitaución actual Covid-19</span></label>
+                <label for="id_input_situacion" class="text-muted"><span>Situación actual Covid-19</span></label>
               </div>
             </div>   
             <div class="row">
@@ -416,6 +419,7 @@ input:checked + .slider:before {
       <div class="modal-body">
         <div class="row">
         <div class="col-12">
+          <p><span id="dir1"></span> <span id="tel1"></span></p>
           <div id="data">
             <table id="detallesUpdates" class="stripe responsive" style="width:100%">
                 <thead>
@@ -467,11 +471,11 @@ input:checked + .slider:before {
 
         <div class="row">
           <div class="col-5 pb-3">
-
+        <p><span id="dir1"></span> <span id="tel1"></span></p>
         <form id="id_form_seguimiento">
           <input type="hidden" class="form-control" name="input_transactionid_seguimiento" id="tId">
           <input type="hidden" class="form-control" name="input_seguimiento_tipo" id="iSt">
-          <input type="hidden" class="form-control" name="input_seguimiento_profesional" value="Santiago Lobos" id="id_input_seguimiento_profesional">
+          <input type="hidden" class="form-control" name="input_seguimiento_profesional" value="<?php echo $_SESSION['nombre']." ".$_SESSION['apellido'];?>" id="id_input_seguimiento_profesional">
 
           <div class="row">
             <div class="col-12 col-lg-6">
@@ -483,7 +487,7 @@ input:checked + .slider:before {
             <div class="col-12 col-lg-6">
               <div class="form-group">
                 <label for="id_input_profesional" class="text-muted"><span>Profesional</span></label>
-                <input type="text" class="form-control" value="Santiago Lobos" disabled>
+                <input type="text" class="form-control" value="<?php echo $_SESSION['nombre']." ".$_SESSION['apellido'];?>" disabled>
               </div>
             </div>
           </div>
@@ -601,14 +605,18 @@ const detalles =
 
 
     $('#setUpdate').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget)
-      var tId = button.data('transactionid')
-      var tipo = button.data('tipo')
-      var pName = button.data('paciente')
+      var button = $(event.relatedTarget);
+      var tId = button.data('transactionid');
+      var tipo = button.data('tipo');
+      var pName = button.data('paciente');
+      var telefonos = button.data('telefonos');
+      var direccion = button.data('direccion');
       var modal = $(this)
       modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
-      modal.find('.modal-body #tId').val(tId)
-      modal.find('.modal-body #iSt').val(tipo)
+      modal.find('.modal-body #tId').val(tId);
+      modal.find('.modal-body #tel').text('Tel: '+telefonos);
+      modal.find('.modal-body #dir').text('Dirección: '+direccion);
+
 
       detalles.ajax.url("/detalles.php?UID="+tId).load();
 
@@ -647,13 +655,17 @@ const detalles =
       } );
     $('#viewUpdates').on('show.bs.modal', function (event) {
       var button = $(event.relatedTarget);
-      var tId = button.data('transactionid');
+      var tId1 = button.data('transactionid');
       var pName = button.data('paciente');
-      var modal = $(this);
-      modal.find('.modal-title').text('Seguimiento de paciente ' + pName );
-      modal.find('.modal-body #tId').val(tId);
+      var telefonos = button.data('telefonos');
+      var direccion = button.data('direccion');
+      var modal = $(this)
+      modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
+      modal.find('.modal-body #tId1').val(tId1);
+      modal.find('.modal-body #tel1').text('Tel: '+telefonos);
+      modal.find('.modal-body #dir1').text('Dirección: '+direccion);
       
-      detalleTable.ajax.url("/detalles.php?UID="+tId).load();
+      detalleTable.ajax.url("/detalles.php?UID="+tId1).load();
 
     });
  
@@ -844,9 +856,9 @@ const detalles =
               "orderable":false,
               "render": function ( data, type, row ) {
                 if(row.situacion != "Fallecido" && row.situacion != "Alta"){             
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'"><i class="far fa-edit"></i></button>';
+                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'"><i class="far fa-edit"></i></button>';
                 } else {
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"><i class="fas fa-eye"></i></button>';
+                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'"><i class="fas fa-eye"></i></button>';
                 }
               }
 

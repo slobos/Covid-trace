@@ -3,10 +3,10 @@ date_default_timezone_set('America/Argentina/Cordoba');
 // Variables definitions
 
 // MySQL
-define("DBHOST", "localhost");
-define("DBUSER","root");
-define("DBPASS","root");
-define("DBNAME","covidlocaltrace");
+define("DBHOST", "");
+define("DBUSER","");
+define("DBPASS","");
+define("DBNAME","");
 // General
 
 define("DATE",date("Y-m-d"));
