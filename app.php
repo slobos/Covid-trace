@@ -608,23 +608,13 @@ input:checked + .slider:before {
       } );
     })
  
-    $('#viewUpdates').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget)
-      var tId = button.data('transactionid')
-      var pName = button.data('paciente')
-      var modal = $(this)
-      modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
-      modal.find('.modal-body #tId').val(tId)
-
-
-
-     $('#detallesUpdates').DataTable( {
+    const detalleTable=$('#detallesUpdates').DataTable( {
             "language": {
               "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
             },
             responsive: true,
             "ajax":{
-            "url": "/detalles.php?UID="+tId,
+            "url": null,
             "type": "GET"
             },
 
@@ -649,7 +639,17 @@ input:checked + .slider:before {
             ],            
              order: [[ 0, 'desc' ]]       
       } );
-    })
+    $('#viewUpdates').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var tId = button.data('transactionid');
+      var pName = button.data('paciente');
+      var modal = $(this);
+      modal.find('.modal-title').text('Seguimiento de paciente ' + pName );
+      modal.find('.modal-body #tId').val(tId);
+      
+      detalleTable.ajax.url("/detalles.php?UID="+tId).load();
+
+    });
  
 
     $("#id_form_alta").validate({
