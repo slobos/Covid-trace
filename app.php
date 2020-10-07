@@ -762,7 +762,7 @@ input:checked + .slider:before {
               if(res.status=='ok') {                
               
               show_message_seguimiento('Se registro correctamente el seguimiento del paciente.');  
-
+              detalleTable.ajax.reload();
               $('#id_form_seguimiento').trigger("reset");
 
               } else {
