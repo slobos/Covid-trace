@@ -614,7 +614,7 @@ input:checked + .slider:before {
             },
             responsive: true,
             "ajax":{
-            "url": null,
+            "url": '/dummy.json',
             "type": "GET"
             },
 
