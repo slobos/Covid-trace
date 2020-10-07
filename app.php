@@ -409,7 +409,7 @@ input:checked + .slider:before {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Seguimiento de paciente</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -442,7 +442,7 @@ input:checked + .slider:before {
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -454,7 +454,7 @@ input:checked + .slider:before {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Seguimiento de paciente</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -540,7 +540,7 @@ input:checked + .slider:before {
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -572,23 +572,14 @@ input:checked + .slider:before {
       clearInterval(refresh_interval);
     }
 
-    $('#setUpdate').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget)
-      var tId = button.data('transactionid')
-      var tipo = button.data('tipo')
-      var pName = button.data('paciente')
-      var modal = $(this)
-      modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
-      modal.find('.modal-body #tId').val(tId)
-      modal.find('.modal-body #iSt').val(tipo)
-
+const detalles = 
      $('#detalles').DataTable( {
             "language": {
               "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
             },
             responsive: true,
             "ajax":{
-            "url": "/detalles.php?UID="+tId,
+            "url": "/dummy.json",
             "type": "GET"
             },
             "columns": [                
@@ -606,6 +597,21 @@ input:checked + .slider:before {
             ],            
              order: [[ 0, 'desc' ]]       
       } );
+
+
+
+    $('#setUpdate').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget)
+      var tId = button.data('transactionid')
+      var tipo = button.data('tipo')
+      var pName = button.data('paciente')
+      var modal = $(this)
+      modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
+      modal.find('.modal-body #tId').val(tId)
+      modal.find('.modal-body #iSt').val(tipo)
+
+      detalles.ajax.url("/detalles.php?UID="+tId).load();
+
     })
  
     const detalleTable=$('#detallesUpdates').DataTable( {
@@ -762,7 +768,9 @@ input:checked + .slider:before {
               if(res.status=='ok') {                
               
               show_message_seguimiento('Se registro correctamente el seguimiento del paciente.');  
-              detalleTable.ajax.reload();
+              
+              detalles.ajax.reload();
+
               $('#id_form_seguimiento').trigger("reset");
 
               } else {
