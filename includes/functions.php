@@ -106,6 +106,82 @@ function alta($arData){
 
 
 
+function altav2($arData){
+
+  $transactionid = generateRandomString();
+  $situacion_transactionid = generateRandomString();
+
+
+  $nombreapellido = cleanup($arData['input_nombreapellido']);
+  $dni = cleanup($arData['input_dninumero']);
+  $edad = cleanup($arData['input_edad']);
+  $telefono = cleanup($arData['input_telefono']);
+  $celular = cleanup($arData['input_celular']);
+  $calle = cleanup($arData['input_calle']);
+  $numeracion = cleanup($arData['input_numeracion']);
+  $barrio = cleanup($arData['input_barrio']);
+  $tipo = cleanup($arData['input_covidtipo']);
+  $fecha = cleanup($arData['input_fecharesultado']);
+  $lugar = cleanup($arData['input_lugaranalisis']);
+  $patologiasprevias = cleanup($arData['input_patologiasprevias']);
+  $fechaalta = cleanup($arData['input_fechaposiblealta']);
+  $observaciones = cleanup($arData['input_observaciones']);
+  $latitud = cleanup($arData['input_latitud']);
+  $longitud = cleanup($arData['input_longitud']);
+  $situacion = cleanup($arData['input_situacion']);
+
+  try {
+
+    $db = getConnection();
+
+    $sql = "INSERT INTO pacientes (transactionid, nombreapellido, edad, telefono, celular, calle, numeracion, barrio, tipo, fecha, lugar, patologiasprevias, date, lat, lon, dni) 
+                        VALUES (:transactionid, :nombreapellido, :edad, :telefono, :celular, :calle, :numeracion, :barrio, :tipo, :fecha, :lugar, :patologiasprevias, now(), :latitud, :longitud, :dni)";
+
+    $stmt = $db->prepare($sql); 
+
+    $stmt->bindParam("transactionid" , $transactionid);
+    $stmt->bindParam("nombreapellido" , $nombreapellido);
+    $stmt->bindParam("edad" , $edad);
+    $stmt->bindParam("dni" , $dni);
+    $stmt->bindParam("telefono" , $telefono);
+    $stmt->bindParam("celular" , $celular);
+    $stmt->bindParam("calle" , $calle);
+    $stmt->bindParam("numeracion" , $numeracion);
+    $stmt->bindParam("barrio" , $barrio);
+    $stmt->bindParam("tipo" , $tipo);
+    $stmt->bindParam("fecha" , $fecha);
+    $stmt->bindParam("lugar" , $lugar);
+    $stmt->bindParam("patologiasprevias" , $patologiasprevias);
+    $stmt->bindParam("latitud" , $latitud);
+    $stmt->bindParam("longitud" , $longitud);
+
+    $stmt->execute();
+    $count = $stmt->rowCount();
+
+
+
+    $sql1 = "INSERT INTO seguimientos (transactionid, paciente, tipo, situacion, fecha, observaciones, fechaalta) VALUES
+    (:situacion_transactionid, :transactionid, :tipo, :situacion, now(), :observaciones,:fechaalta)";
+    $stmt1 = $db->prepare($sql1);
+    $stmt1->bindParam("situacion_transactionid",$situacion_transactionid);
+    $stmt1->bindParam("transactionid",$transactionid);
+    $stmt1->bindParam("tipo",$tipo);
+    $stmt1->bindParam("fechaalta",$fechaalta);
+    $stmt1->bindParam("observaciones" , $observaciones);    
+    $stmt1->bindParam("situacion",$situacion);
+    $stmt1->execute();
+
+
+  } catch(PDOException $e) {
+
+    echo '{"error":{"text":'. $e->getMessage() .'}}';
+
+  }
+ return $count;
+}
+
+
+
 function seguimiento($arData){
 
   $transactionid = generateRandomString();
@@ -115,13 +191,14 @@ function seguimiento($arData){
   $situacion = cleanup($arData['input_seguimiento_situacion']);
   $observaciones = cleanup($arData['input_seguimiento_observaciones']);
   $profesional = cleanup($arData['input_seguimiento_profesional']);
+  $fechaalta = cleanup($arData['input_seguimiento_posiblealta']);
 
   try {
 
     $db = getConnection();
 
-    $sql = "INSERT INTO seguimientos (transactionid, paciente, tipo, viacontacto, situacion, fecha, observaciones, profesional) VALUES
-    (:transactionid, :paciente, :tipo, :viacontacto, :situacion, now(), :observaciones, :profesional)";
+    $sql = "INSERT INTO seguimientos (transactionid, paciente, tipo, viacontacto, situacion, fecha, observaciones, profesional, fechaalta) VALUES
+    (:transactionid, :paciente, :tipo, :viacontacto, :situacion, now(), :observaciones, :profesional, :fechaalta)";
     $stmt = $db->prepare($sql);
     $stmt->bindParam("transactionid",$transactionid);
     $stmt->bindParam("paciente",$paciente);
@@ -130,6 +207,7 @@ function seguimiento($arData){
     $stmt->bindParam("situacion",$situacion);
     $stmt->bindParam("observaciones" , $observaciones);    
     $stmt->bindParam("profesional",$profesional);
+    $stmt->bindParam("fechaalta",$fechaalta);
     $stmt->execute();
     $count = $stmt->rowCount();
 
@@ -153,7 +231,7 @@ function getRegistros(){
 
     $db = getConnection();
 
-    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion
+    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion, s.fechaalta, p.dni
 FROM
   pacientes as p,
   seguimientos AS s,

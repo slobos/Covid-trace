@@ -1,11 +1,13 @@
 <?php
 @session_start();
+
 if(isset($_SESSION) and $_SESSION['nombre'] != "" and $_SERVER['HTTP_REFERER'] == ""){
   header("Location: /logout.php");
 }else{
   $logged = true;
 }
 include('includes/securiza.php');
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -229,12 +231,18 @@ input:checked + .slider:before {
           <form method="post" id="id_form_alta" enctype="multipart/form-data">
           <input type="hidden" name="token" value="">
             <div class="row">
-              <div class="col-12 col-lg-9">
+              <div class="col-12 col-lg-6">
                 <div class="form-group">
                   <input type="text" class="form-control" name="input_nombreapellido" id="id_input_nombreapellido">
                   <label for="id_input_nombreapellido" class="text-muted"><span>Nombre/s Apellido/s (*)</span></label>
                 </div>
               </div>
+              <div class="col-12 col-lg-3">
+                <div class="form-group">
+                  <input type="text" class="form-control" name="input_dninumero" id="id_input_dninumero">
+                  <label for="id_input_dninumero" class="text-muted"><span>DNI Nro. (*)</span></label>
+                </div>
+              </div>              
               <div class="col-12 col-lg-3">
                 <div class="form-group">
                   <input type="text" class="form-control" name="input_edad" id="id_input_edad">
@@ -338,13 +346,13 @@ input:checked + .slider:before {
               </div> 
             </div>             
             <div class="row">
-              <div class="col-12 col-lg-6">
+              <div class="col-12 col-lg-4">
                 <div class="form-group">
                   <input type="text" class="form-control" name="input_lugaranalisis" id="id_input_lugaranalisis">
                   <label for="id_input_lugaranalisis" class="text-muted"><span>Lugar de análisis</span></label>
                 </div>
               </div>
-              <div class="col-12 col-lg-6">                
+              <div class="col-12 col-lg-4">                
                   <select name="input_situacion" id="id_input_situacion" class="form-control">
                       <option value=""></option>
                       <option>Hospitalizado</option>
@@ -354,6 +362,13 @@ input:checked + .slider:before {
                   </select> 
                 <label for="id_input_situacion" class="text-muted"><span>Situación actual Covid-19</span></label>
               </div>
+              <div class="col-12 col-lg-4">
+                <div class="form-group">
+                  <input type="text" class="form-control" name="input_fechaposiblealta" id="id_input_fechaposiblealta">
+                  <label for="id_input_fechaposiblealta" class="text-muted"><span>Fecha posible Alta</span></label>
+                </div>
+              </div> 
+
             </div>   
             <div class="row">
               <div class="col-12 col-lg-12">
@@ -381,7 +396,9 @@ input:checked + .slider:before {
                 <thead>
                     <tr>
                         <th>Fecha</th>
+                        <th>Posible Alta</th>
                         <th>Nombre</th>
+                        <th>DNI Nro</th>
                         <th>Estado</th>
                         <th>Situación</th>
                         <td></td>
@@ -390,7 +407,9 @@ input:checked + .slider:before {
                 <tfoot>
                     <tr>
                         <th>Fecha</th>
+                        <th>Posible Alta</th>
                         <th>Nombre</th>
+                        <th>DNI Nro</th>
                         <th>Estado</th>
                         <th>Situación</th>
                         <td></td>
@@ -516,6 +535,14 @@ input:checked + .slider:before {
               </div>
             </div>
           </div>
+          <div class="row">
+            <div class="col-12 col-lg-8">
+              <div class="form-group">
+                <label for="id_input_seguimiento_posiblealta" class="text-muted"><span>Fecha de posible Alta</span></label>
+                <input type="text" class="form-control" name="input_seguimiento_posiblealta" id="id_input_seguimiento_posiblealta">
+              </div>
+            </div>
+          </div>          
           <div class="form-group">
             <label for="id_input_seguimiento_observaciones" class="col-form-label">Observaciones:</label>
             <textarea class="form-control" rows="4" id="id_input_seguimiento_observaciones" name="input_seguimiento_observaciones"></textarea>
@@ -611,11 +638,13 @@ const detalles =
       var pName = button.data('paciente');
       var telefonos = button.data('telefonos');
       var direccion = button.data('direccion');
+      var pAlta = button.data('posiblealta');
       var modal = $(this)
       modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
       modal.find('.modal-body #tId').val(tId);
       modal.find('.modal-body #tel').text('Tel: '+telefonos);
       modal.find('.modal-body #dir').text('Dirección: '+direccion);
+      modal.find('.modal-body #id_input_seguimiento_posiblealta').val(pAlta);
 
 
       detalles.ajax.url("/detalles.php?UID="+tId).load();
@@ -676,6 +705,10 @@ const detalles =
           required: true,
           minlength: 3
         },
+        input_dninumero: {
+          required: true,
+          minlength: 6
+        },
         input_celular: {
           required: true,
           minlength: 3
@@ -702,6 +735,7 @@ const detalles =
       },
       messages: {
         input_nombreapellido: "Ingrese nombre y apellido",
+        input_dninumero: "Definir",
         input_celular: "Ingrese número de celular",
         input_calle: "Ingrese calle",
         input_numeracion: "Numeración",
@@ -818,7 +852,7 @@ const detalles =
     var myLayers=new google.maps.MVCObject();
 
     const map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 12,
+          zoom: 14,
           center: new google.maps.LatLng(-31.2663498,-64.1590545),
           zoomControl: true,
           mapTypeControl: false,
@@ -846,17 +880,22 @@ const detalles =
           },
           "columns": [                
             {"data":"fecha"},
+            {
+            data: 'fechaalta',
+            type: 'date',
+            render: function (data, type, row) { return data ? moment(data).format('DD/MM/YYYY') : ''; }},
             {"data":"nombreapellido"},
+            {"data":"dni"},
             {"data":"tipo"},
             {"data":"situacion"},
           ],
           "columnDefs": [
             {
-              "targets":4,
+              "targets":6,
               "orderable":false,
               "render": function ( data, type, row ) {
                 if(row.situacion != "Fallecido" && row.situacion != "Alta"){             
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'"><i class="far fa-edit"></i></button>';
+                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-posiblealta="'+row.fechaalta+'"><i class="far fa-edit"></i></button>';
                 } else {
                   return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'"><i class="fas fa-eye"></i></button>';
                 }
@@ -871,7 +910,7 @@ const detalles =
         $('.layer_switch').click(function(){
             if(this.value=='groupejc') {
 
-              render_groupzones('ejc','#1aff1a','#006b00');
+              render_groupzones('ejc','#537FA3','#006b00');
               rendered_groupzones=true;
             }          
            
@@ -1182,6 +1221,84 @@ $(function() {
     maxDate: moment()
   })
 
+
+  $('input[name="input_fechaposiblealta"]').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    locale: {
+        "format": "YYYY-MM-DD",
+        "separator": " - ",
+        "applyLabel": "Aplicar",
+        "cancelLabel": "Cancelar",
+        "customRangeLabel": "Personalizado",
+        "weekLabel": "W",
+        "daysOfWeek": [
+            "Dom",
+            "Lun",
+            "Mar",
+            "Mie",
+            "Jue",
+            "Vie",
+            "Sab"
+        ],
+        "monthNames": [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre"
+        ],
+        "firstDay": 1
+    },
+    autoApply: true
+  })
+
+  $('input[name="input_seguimiento_posiblealta"]').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    locale: {
+        "format": "YYYY-MM-DD",
+        "separator": " - ",
+        "applyLabel": "Aplicar",
+        "cancelLabel": "Cancelar",
+        "customRangeLabel": "Personalizado",
+        "weekLabel": "W",
+        "daysOfWeek": [
+            "Dom",
+            "Lun",
+            "Mar",
+            "Mie",
+            "Jue",
+            "Vie",
+            "Sab"
+        ],
+        "monthNames": [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre"
+        ],
+        "firstDay": 1
+    },
+    autoApply: false,
+    autoUpdateInput: false,
+  })
+
   $('input[name="input_seguimiento_fecha"]').daterangepicker({
     singleDatePicker: true,
     showDropdowns: true,
@@ -1217,7 +1334,7 @@ $(function() {
         ],
         "firstDay": 1
     },
-    autoApply: true,
+    autoApply: false,
     minDate: "07/31/2020",
     maxDate: moment()
   })  
