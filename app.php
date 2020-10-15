@@ -1,6 +1,8 @@
 <?php
 @session_start();
-
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
 if(isset($_SESSION) and $_SESSION['nombre'] != "" and $_SERVER['HTTP_REFERER'] == ""){
   header("Location: /logout.php");
 }else{
@@ -251,13 +253,24 @@ input:checked + .slider:before {
               </div>
             </div>
             <div class="row">
-              <div class="col-12 col-lg-6">
+              <div class="col-12 col-lg-2">
+                <div class="form-group">
+                  <select name="input_sexo" id="id_input_sexo" class="form-control" required>
+                      <option value=""></option>
+                      <option>Masculino</option>
+                      <option>Femenino</option>
+                      <option>Otr@</option>
+                  </select>                    
+                  <label for="id_input_sexo" class="text-muted"><span>Sexo (*)</span></label>
+                </div>
+              </div>              
+              <div class="col-12 col-lg-5">
                 <div class="form-group">
                   <input type="text" class="form-control" name="input_telefono" id="id_input_telefono">
                   <label for="id_input_telefono" class="text-muted"><span>Teléfono</span></label>
                 </div>
               </div>
-              <div class="col-12 col-lg-6">
+              <div class="col-12 col-lg-5">
                 <div class="form-group">
                   <input type="text" class="form-control" name="input_celular" id="id_input_celular">
                   <label for="id_input_celular" class="text-muted"><span>Celular (*)</span></label>
@@ -487,10 +500,9 @@ input:checked + .slider:before {
               <div id="message_seguimiento"></div>
           </div>
         </div>
-
         <div class="row">
           <div class="col-5 pb-3">
-        <p><span id="dir1"></span> <span id="tel1"></span></p>
+        <p><span id="dir1"></span> <span id="tel"></span></p>
         <form id="id_form_seguimiento">
           <input type="hidden" class="form-control" name="input_transactionid_seguimiento" id="tId">
           <input type="hidden" class="form-control" name="input_seguimiento_tipo" id="iSt">
@@ -520,6 +532,7 @@ input:checked + .slider:before {
                       <option>Domicilio</option>
                       <option>Alta</option>
                       <option>Fallecido</option>
+                      <option>Sin información</option>
                   </select>                
               </div>
             </div>
@@ -536,7 +549,13 @@ input:checked + .slider:before {
             </div>
           </div>
           <div class="row">
-            <div class="col-12 col-lg-8">
+            <div class="col-12 col-lg-6">
+              <div class="form-group">
+                <label class="text-muted mb-3"><span>Fecha de Isopado</span></label><br>
+                <div id="fechaIsopado"></div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6">
               <div class="form-group">
                 <label for="id_input_seguimiento_posiblealta" class="text-muted"><span>Fecha de posible Alta</span></label>
                 <input type="text" class="form-control" name="input_seguimiento_posiblealta" id="id_input_seguimiento_posiblealta">
@@ -639,12 +658,14 @@ const detalles =
       var telefonos = button.data('telefonos');
       var direccion = button.data('direccion');
       var pAlta = button.data('posiblealta');
+      var fIsopado = button.data('fisopado');
       var modal = $(this)
       modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
       modal.find('.modal-body #tId').val(tId);
       modal.find('.modal-body #tel').text('Tel: '+telefonos);
       modal.find('.modal-body #dir').text('Dirección: '+direccion);
       modal.find('.modal-body #id_input_seguimiento_posiblealta').val(pAlta);
+      modal.find('.modal-body #fechaIsopado').text(fIsopado);
 
 
       detalles.ajax.url("/detalles.php?UID="+tId).load();
@@ -709,6 +730,9 @@ const detalles =
           required: true,
           minlength: 6
         },
+        input_sexo: {
+          required: true
+        },
         input_celular: {
           required: true,
           minlength: 3
@@ -736,6 +760,7 @@ const detalles =
       messages: {
         input_nombreapellido: "Ingrese nombre y apellido",
         input_dninumero: "Definir",
+        input_sexo: "Definir",
         input_celular: "Ingrese número de celular",
         input_calle: "Ingrese calle",
         input_numeracion: "Numeración",
@@ -881,23 +906,48 @@ const detalles =
           "columns": [                
             {"data":"fecha"},
             {
-            data: 'fechaalta',
-            type: 'date',
-            render: function (data, type, row) { return data ? moment(data).format('DD/MM/YYYY') : ''; }},
+              data: 'fechaalta',
+              type: 'date',
+              render: function (data, type, row) { 
+                if(data != '0000-00-00'){
+                  return data ? moment(data).format('DD/MM/YYYY') : ''; 
+                } else {
+                  return "";
+                }
+              }
+            },
             {"data":"nombreapellido"},
             {"data":"dni"},
-            {"data":"tipo"},
-            {"data":"situacion"},
           ],
           "columnDefs": [
+            {
+              "targets":4,
+              "render":function (data,type,row){
+                if(row.tipo == "NULL"){
+                  return "Sin información";
+                } else {
+                  return row.tipo;
+                }
+              }
+            },
+                        {
+              "targets":5,
+              "render":function (data,type,row){
+                if(row.situacion == "NULL"){
+                  return "Sin información";
+                } else {
+                  return row.situacion;
+                }
+              }
+            },
             {
               "targets":6,
               "orderable":false,
               "render": function ( data, type, row ) {
                 if(row.situacion != "Fallecido" && row.situacion != "Alta"){             
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-posiblealta="'+row.fechaalta+'"><i class="far fa-edit"></i></button>';
+                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-posiblealta="'+row.fechaalta+'" data-fisopado="'+row.fIsopado+'"><i class="far fa-edit"></i></button>';
                 } else {
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'"><i class="fas fa-eye"></i></button>';
+                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-fisopado="'+row.fIsopado+'"><i class="fas fa-eye"></i></button>';
                 }
               }
 
@@ -989,7 +1039,7 @@ const detalles =
 
  //contenedores
         function render_markers(type,filter){
-            $.get("/markers.php", function(res){              
+            $.get("/markers.php?rand=<?php echo rand();?>", function(res){              
                 res.data.forEach(function (paciente){              
 
                   if(paciente.tipo == 'Positivo' && paciente.situacion == 'Domicilio'){
@@ -1062,7 +1112,7 @@ const detalles =
     var TILE_SIZE = 256;
 
     var dataPoints = new Array();
-    $.get("/markers.php", function(res){
+    $.get("/markers.php?rand=<?php echo rand();?>", function(res){
         res.data.forEach(function (heatbasural){
             dataPoints.push(new google.maps.LatLng(heatbasural.lat,heatbasural.lon));
         });
@@ -1227,7 +1277,7 @@ $(function() {
     showDropdowns: true,
     locale: {
         "format": "YYYY-MM-DD",
-        "separator": " - ",
+        "separator": "-",
         "applyLabel": "Aplicar",
         "cancelLabel": "Cancelar",
         "customRangeLabel": "Personalizado",
@@ -1265,7 +1315,7 @@ $(function() {
     showDropdowns: true,
     locale: {
         "format": "YYYY-MM-DD",
-        "separator": " - ",
+        "separator": "-",
         "applyLabel": "Aplicar",
         "cancelLabel": "Cancelar",
         "customRangeLabel": "Personalizado",
@@ -1296,7 +1346,7 @@ $(function() {
         "firstDay": 1
     },
     autoApply: false,
-    autoUpdateInput: false,
+    autoUpdateInput: true,
   })
 
   $('input[name="input_seguimiento_fecha"]').daterangepicker({

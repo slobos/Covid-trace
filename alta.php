@@ -3,7 +3,7 @@ header("Content-type:application/json");
 include("includes/functions.php");
 include("includes/_vars.php");
 if(isset($_POST['input_nombreapellido']) && isset($_POST['input_celular']) && isset($_POST['input_calle']) && isset($_POST['input_numeracion']) && isset($_POST['input_barrio']) && isset($_POST['input_covidtipo'])){
-	$res = alta($_POST);
+	$res = altav2($_POST);
 	if($res == 1){
 		$arData['status'] = "ok";
 		$arData['message'] = "Paciente correctamente registrado";

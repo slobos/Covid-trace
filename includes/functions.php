@@ -115,6 +115,7 @@ function altav2($arData){
   $nombreapellido = cleanup($arData['input_nombreapellido']);
   $dni = cleanup($arData['input_dninumero']);
   $edad = cleanup($arData['input_edad']);
+  $sexo = cleanup($arData['input_sexo']);
   $telefono = cleanup($arData['input_telefono']);
   $celular = cleanup($arData['input_celular']);
   $calle = cleanup($arData['input_calle']);
@@ -134,8 +135,8 @@ function altav2($arData){
 
     $db = getConnection();
 
-    $sql = "INSERT INTO pacientes (transactionid, nombreapellido, edad, telefono, celular, calle, numeracion, barrio, tipo, fecha, lugar, patologiasprevias, date, lat, lon, dni) 
-                        VALUES (:transactionid, :nombreapellido, :edad, :telefono, :celular, :calle, :numeracion, :barrio, :tipo, :fecha, :lugar, :patologiasprevias, now(), :latitud, :longitud, :dni)";
+    $sql = "INSERT INTO pacientes (transactionid, nombreapellido, edad, sexo, telefono, celular, calle, numeracion, barrio, tipo, fecha, lugar, patologiasprevias, date, lat, lon, dni) 
+                        VALUES (:transactionid, :nombreapellido, :edad, :sexo, :telefono, :celular, :calle, :numeracion, :barrio, :tipo, :fecha, :lugar, :patologiasprevias, now(), :latitud, :longitud, :dni)";
 
     $stmt = $db->prepare($sql); 
 
@@ -143,6 +144,7 @@ function altav2($arData){
     $stmt->bindParam("nombreapellido" , $nombreapellido);
     $stmt->bindParam("edad" , $edad);
     $stmt->bindParam("dni" , $dni);
+    $stmt->bindParam("sexo" , $sexo);
     $stmt->bindParam("telefono" , $telefono);
     $stmt->bindParam("celular" , $celular);
     $stmt->bindParam("calle" , $calle);
@@ -231,7 +233,7 @@ function getRegistros(){
 
     $db = getConnection();
 
-    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion, s.fechaalta, p.dni
+    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion, s.fechaalta, p.dni, date_format(p.fecha, '%d/%m/%Y') as fIsopado
 FROM
   pacientes as p,
   seguimientos AS s,
@@ -289,7 +291,8 @@ function getDetalles($id){
 
     $db = getConnection();
 
-    $sql = "SELECT date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, s.viacontacto, s.observaciones FROM seguimientos as s WHERE s.paciente = :id  order by s.fecha desc";
+    //$sql = "SELECT date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, s.viacontacto, s.observaciones FROM seguimientos as s WHERE s.paciente = :id  order by s.fecha desc";
+    $sql = "SELECT date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, s.viacontacto, s.observaciones FROM pacientes as p, seguimientos as s WHERE p.transactionid = s.paciente and s.paciente = :id  order by s.fecha desc";
     $stmt = $db->prepare($sql); 
     $stmt->bindParam("id",$id);    
     $stmt->execute();
