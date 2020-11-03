@@ -40,7 +40,7 @@ if(isset($_SESSION['token']) && @$_POST['token'] == $_SESSION['token']){
                 <div class="card">
                     <div class="card-body text-center">
                       <img src="/images/logo-gestion.png" class="img-fluid my-2">
-                      <p class="text-muted text-center">Sistema de registro siguimiento de pacientes COVID-19</p>
+                      <p class="text-muted text-center">Sistema de registro/seguimiento de pacientes COVID-19</p>
                         <form method="post" action="/" name="fLogin" id="idfLogin">
                           <input type="hidden" name="token" value="<?php echo $token; ?>">
                             <div class="form-group">
@@ -59,7 +59,7 @@ if(isset($_SESSION['token']) && @$_POST['token'] == $_SESSION['token']){
             </div>    
     </div>  
       <div class="row mt-5">
-        <div class="col text-center" style="font-size:11px;"><img src="/images/jgeeks-logo.svg" alt="Acción de RSE - J.Geeks Software factory" width="76"><p class="text-muted"><small>Acción de RSE - Servir a la sociedad con productos útiles y en condiciones justas.<br>J.Geeks &reg; | Copyrights 2020</small></p></div>
+        <div class="col text-center" style="font-size:11px;"><img src="/images/jgeeks-logo.svg" alt="Acción de RSE - J.Geeks Software factory" width="76"><p class="text-muted"><small>Acción de RSE - Servir a la sociedad con productos útiles y en condiciones justas.<br>J.Geeks &reg; | Copyright 2020</small></p></div>
       </div>    
     </div>
   <?php

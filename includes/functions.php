@@ -223,7 +223,25 @@ function seguimiento($arData){
 }
 
 
+function deleteRegistros($trid){
 
+  try {
+
+    $db = getConnection();
+
+    $sql = "UPDATE pacientes SET status = 0 WHERE transactionid = :tid";
+    $stmt = $db->prepare($sql); 
+    $stmt->bindParam("tid",$trid);    
+    $stmt->execute();
+
+  } catch(PDOException $e) {
+
+    echo '{"error":{"text":'. $e->getMessage() .'}}';
+
+  }
+  
+ return "ok"; 
+}
 
 
 
@@ -233,12 +251,13 @@ function getRegistros(){
 
     $db = getConnection();
 
-    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion, s.fechaalta, p.dni, date_format(p.fecha, '%d/%m/%Y') as fIsopado
+    $sql = "SELECT p.transactionid, p.nombreapellido, date_format(s.fecha, '%d/%m/%Y') as fecha, date_format(p.fecha, '%d/%m/%Y') as minfecha, s.tipo, s.situacion, p.lat, p.lon, p.celular as telefonos, concat(p.calle,' ',p.numeracion,', ',p.barrio) as direccion, s.fechaalta, p.dni, date_format(p.fecha, '%d/%m/%Y') as fIsopado
 FROM
   pacientes as p,
   seguimientos AS s,
-  (SELECT id, paciente, max(fecha) AS fecha FROM seguimientos GROUP BY paciente) as seg
+  (SELECT id, paciente, max(fecha) AS fecha FROM seguimientos GROUP BY paciente) as seg  
 WHERE
+  p.status = 1 and
   s.paciente=p.transactionid AND
   seg.paciente=s.paciente AND
   seg.fecha=s.fecha";
@@ -254,6 +273,46 @@ WHERE
   $arData['data'] = $results;
  return $arData;
 }
+
+
+function getAnalisis(){
+
+  try {
+
+    $db = getConnection();
+
+    $sql = "SELECT count(*) as cuenta, s.situacion
+FROM
+  pacientes as p,
+  seguimientos AS s,
+  (SELECT id, paciente, max(fecha) AS fecha FROM seguimientos GROUP BY paciente) as seg  
+WHERE
+  p.status = 1 and
+  s.paciente=p.transactionid AND
+  seg.paciente=s.paciente AND
+  seg.fecha=s.fecha
+  group by situacion";
+  
+    $stmt = $db->prepare($sql); 
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo "<ul class=\"list-inline text-center\">";
+    foreach($results as $result){
+      echo "<li class=\"list-inline-item text-center mx-1 my-2 p-2 border\"><small>".$result['situacion']."</small><br><span style=\"font-size:1.2em;color:#333;\">".$result['cuenta']."</span></li>";
+    }
+    echo "</ul>";
+    
+
+  } catch(PDOException $e) {
+
+    echo '{"error":{"text":'. $e->getMessage() .'}}';
+
+  }
+
+
+}
+
 
 function getMarkers(){
 
@@ -407,7 +466,7 @@ function login($arData){
 
                 $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                $sql1 = "select nombre, apellido, email FROM profesionales WHERE transactionid = :transactionid";
+                $sql1 = "select nombre, apellido, email, level FROM profesionales WHERE transactionid = :transactionid";
                 $stmt1 = $db->prepare($sql1); 
                 $stmt1->bindParam("transactionid",$res[0]['transactionid']);
                 $stmt1->execute();
@@ -416,6 +475,7 @@ function login($arData){
               
                   $_SESSION['nombre'] = $results[0]['nombre'];
                   $_SESSION['apellido'] = $results[0]['apellido'];
+                  $_SESSION['level'] = $results[0]['level'];
                   $_SESSION['error_login'] = false;
                   
 

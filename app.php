@@ -9,7 +9,8 @@ if(isset($_SESSION) and $_SESSION['nombre'] != "" and $_SERVER['HTTP_REFERER'] =
   $logged = true;
 }
 include('includes/securiza.php');
-
+include('includes/_vars.php');
+include('includes/functions.php');
 ?>
 <!doctype html>
 <html lang="en">
@@ -209,9 +210,6 @@ input:checked + .slider:before {
 
       <div class="row">
         <div class="col-12 col-lg-12">
-          <div class="map-container">
-            <div class="inc_map" id="map"></div>
-          </div>
         </div>
       </div>
       <div class="row">
@@ -325,7 +323,7 @@ input:checked + .slider:before {
                 </div>
               </div>
               <div class="col-12 col-lg-1">
-                  <button class="btn-outline-success btn" id="btnGetll" type="button" type="button"><i class="fas fa-map-pin"></i></button>
+                  <button class="btn-outline-success btn" id="btnGetll" type="button"><i class="fas fa-map-pin"></i></button>
               </div>
             </div>
 
@@ -403,11 +401,24 @@ input:checked + .slider:before {
             </div>
           </form>
         </div>
+
         <div class="col-12 col-lg-6 mt-5">
+          <div class="map-container">
+            <div class="inc_map" id="map"></div>
+          </div>          
+
+          <?php
+          getAnalisis();
+          ?>
+        </div>
+      </div>
+      <div class="row px-3">
+        <div class="col-12 col-lg-12 mt-5">
           <h5>Listado para seguimiento</h5>
             <table id="registros" class="display" style="width:100%">
                 <thead>
                     <tr>
+                        <th>Registro</th>
                         <th>Fecha</th>
                         <th>Posible Alta</th>
                         <th>Nombre</th>
@@ -419,6 +430,7 @@ input:checked + .slider:before {
                 </thead>
                 <tfoot>
                     <tr>
+                        <th>Registro</th>
                         <th>Fecha</th>
                         <th>Posible Alta</th>
                         <th>Nombre</th>
@@ -502,7 +514,7 @@ input:checked + .slider:before {
         </div>
         <div class="row">
           <div class="col-5 pb-3">
-        <p><span id="dir1"></span> <span id="tel"></span></p>
+        <p><span id="dir"></span><br><span id="tel"></span></p>
         <form id="id_form_seguimiento">
           <input type="hidden" class="form-control" name="input_transactionid_seguimiento" id="tId">
           <input type="hidden" class="form-control" name="input_seguimiento_tipo" id="iSt">
@@ -532,7 +544,7 @@ input:checked + .slider:before {
                       <option>Domicilio</option>
                       <option>Alta</option>
                       <option>Fallecido</option>
-                      <option>Sin información</option>
+                      <option selected>Sin información</option>
                   </select>                
               </div>
             </div>
@@ -551,7 +563,7 @@ input:checked + .slider:before {
           <div class="row">
             <div class="col-12 col-lg-6">
               <div class="form-group">
-                <label class="text-muted mb-3"><span>Fecha de Isopado</span></label><br>
+                <label class="text-muted mb-3"><span>Fecha de Hisopado</span></label><br>
                 <div id="fechaIsopado"></div>
               </div>
             </div>
@@ -589,7 +601,7 @@ input:checked + .slider:before {
           </div>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer">      
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
       </div>
     </div>
@@ -662,6 +674,7 @@ const detalles =
       var modal = $(this)
       modal.find('.modal-title').text('Seguimiento de paciente ' + pName )
       modal.find('.modal-body #tId').val(tId);
+      modal.find('.modal-body #iSt').val(tipo);
       modal.find('.modal-body #tel').text('Tel: '+telefonos);
       modal.find('.modal-body #dir').text('Dirección: '+direccion);
       modal.find('.modal-body #id_input_seguimiento_posiblealta').val(pAlta);
@@ -903,7 +916,8 @@ const detalles =
             "url": "/registros.php",
           "type": "GET"
           },
-          "columns": [                
+          "columns": [
+            {"data":"minfecha"},       
             {"data":"fecha"},
             {
               data: 'fechaalta',
@@ -921,7 +935,7 @@ const detalles =
           ],
           "columnDefs": [
             {
-              "targets":4,
+              "targets":5,
               "render":function (data,type,row){
                 if(row.tipo == "NULL"){
                   return "Sin información";
@@ -931,7 +945,7 @@ const detalles =
               }
             },
                         {
-              "targets":5,
+              "targets":6,
               "render":function (data,type,row){
                 if(row.situacion == "NULL"){
                   return "Sin información";
@@ -941,14 +955,20 @@ const detalles =
               }
             },
             {
-              "targets":6,
+              "targets":7,
               "orderable":false,
               "render": function ( data, type, row ) {
                 if(row.situacion != "Fallecido" && row.situacion != "Alta"){             
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-posiblealta="'+row.fechaalta+'" data-fisopado="'+row.fIsopado+'"><i class="far fa-edit"></i></button>';
+                  var rtr = '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#setUpdate" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'" data-tipo="'+row.tipo+'" data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-posiblealta="'+row.fechaalta+'" data-fisopado="'+row.fIsopado+'"><i class="far fa-edit"></i></button>';
                 } else {
-                  return '<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-fisopado="'+row.fIsopado+'"><i class="fas fa-eye"></i></button>';
+                  var rtr ='<button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#viewUpdates" data-transactionid="'+row.transactionid+'" data-paciente="'+row.nombreapellido+'"  data-telefonos="'+row.telefonos+'" data-direccion="'+row.direccion+'" data-fisopado="'+row.fIsopado+'"><i class="fas fa-eye"></i></button>';                  
                 }
+                  <?php
+                  if($_SESSION['level'] == "0"){?>
+                   rtr += '<a href="/eliminar.php?p='+row.transactionid+'" type="button" class="btn btn-sm btn-danger" onclick="return confirm(\'Seguro desea eliminar este paciente?\');"><i class="fas fa-minus-circle"></i></a>';
+                  <?php } ?>                  
+
+                return rtr;
               }
 
             }
@@ -1184,6 +1204,7 @@ const detalles =
       //Mercator --END--
 
 
+
       var desiredRadiusPerPointInMeters = 100;
       function getNewRadius() {
           
@@ -1388,6 +1409,7 @@ $(function() {
     minDate: "07/31/2020",
     maxDate: moment()
   })  
+
 });
         
 
